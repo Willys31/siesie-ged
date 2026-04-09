@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html {
+    transition: background-color 300ms ease, color 300ms ease;
+  }
+  body {
+    @apply font-sans antialiased bg-gray-100 text-gray-800
+           dark:bg-gray-950 dark:text-gray-200;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+           bg-blue-800 hover:bg-blue-700 text-white text-sm font-semibold
+           transition-all duration-200 shadow-sm hover:shadow-md active:scale-95
+           disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+           bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium
+           transition-all duration-200 shadow-sm active:scale-95
+           dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
+           bg-red-500 hover:bg-red-600 text-white text-sm font-semibold
+           transition-all duration-200 shadow-sm active:scale-95;
+  }
+  .input {
+    @apply w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white
+           text-sm text-gray-900 placeholder-gray-400
+           focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500
+           transition-all duration-150
+           dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-500
+           dark:focus:border-blue-400;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100
+           transition-colors duration-300
+           dark:bg-gray-800 dark:border-gray-700;
+  }
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+}
+
+.skeleton {
+  @apply bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse;
+}
+
+/* Résultats de recherche Elasticsearch */
+.search-highlight em {
+  background-color: #FEF08A;
+  font-style: normal;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+.dark .search-highlight em {
+  background-color: #713f12;
+  color: #fef9c3;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+.dark ::-webkit-scrollbar-thumb { background: #4B5563; }

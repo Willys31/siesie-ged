@@ -1,0 +1,108 @@
+##############################################################################
+# render.yaml — Blueprint SieSie GED
+#
+# Services déployés :
+#   1. siesie-backend  — Web Service Docker (FastAPI + uvicorn)
+#   2. siesie-frontend — Static Site (React / Vite)
+#   3. siesie-db       — PostgreSQL (managed)
+#
+# Utilisation :
+#   1. Pousser le repo sur GitHub/GitLab
+#   2. Sur Render : New → Blueprint → sélectionner ce repo
+#   3. Render crée les 3 services automatiquement
+#   4. Mettre à jour les valeurs marquées [CHANGE ME] après le premier déploiement
+##############################################################################
+
+databases:
+  - name: siesie-db
+    databaseName: ged_db
+    user: ged_user
+    plan: free          # passer à "starter" en production
+    region: frankfurt   # choisir la région la plus proche de vos utilisateurs
+
+services:
+
+  # ── 1. Backend FastAPI ──────────────────────────────────────────────────────
+  - type: web
+    name: siesie-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free            # passer à "starter" pour de la persistance des uploads
+    region: frankfurt
+    healthCheckPath: /health
+
+    # Disque persistant pour les fichiers uploadés
+    # Note : les disques persistants nécessitent un plan payant (starter+)
+    disk:
+      name: siesie-uploads
+      mountPath: /uploads
+      sizeGB: 5
+
+    envVars:
+      # ── Base de données (injectée automatiquement depuis siesie-db) ─────────
+      - key: DATABASE_URL
+        fromDatabase:
+          name: siesie-db
+          property: connectionStringAsync   # postgresql+asyncpg://...
+      - key: DATABASE_URL_SYNC
+        fromDatabase:
+          name: siesie-db
+          property: connectionString        # postgresql://...
+
+      # ── Sécurité ──────────────────────────────────────────────────────────
+      - key: SECRET_KEY
+        generateValue: true   # Render génère une clé aléatoire sécurisée
+
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: "7"
+
+      # ── CORS — URL du frontend (à mettre à jour après le 1er déploiement) ─
+      - key: FRONTEND_URL
+        value: https://siesie-frontend.onrender.com   # [CHANGE ME si nom différent]
+
+      # ── Upload ────────────────────────────────────────────────────────────
+      - key: UPLOAD_DIR
+        value: /uploads
+      - key: MAX_FILE_SIZE
+        value: "52428800"   # 50 Mo
+
+      # ── Elasticsearch (optionnel) ─────────────────────────────────────────
+      # Laisser vide pour utiliser la recherche PostgreSQL FTS (recommandé sur Render free)
+      # Décommenter et renseigner si vous avez un cluster Elasticsearch externe :
+      # - key: ELASTICSEARCH_URL
+      #   value: https://your-es-cluster.example.com
+
+      # ── Debug ─────────────────────────────────────────────────────────────
+      - key: DEBUG
+        value: "false"
+
+  # ── 2. Frontend React (Vite) ────────────────────────────────────────────────
+  - type: web
+    name: siesie-frontend
+    runtime: static
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: ./frontend/dist
+    pullRequestPreviewsEnabled: false
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /*
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+
+    routes:
+      # SPA fallback — toutes les routes non-fichier renvoient index.html
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+    envVars:
+      # URL du backend (à mettre à jour si le nom du service change)
+      - key: VITE_API_URL
+        value: https://siesie-backend.onrender.com   # [CHANGE ME si nom différent]
